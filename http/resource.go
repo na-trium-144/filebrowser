@@ -267,6 +267,7 @@ func writeFile(fs afero.Fs, dst string, in io.Reader, uid, gid int) (os.FileInfo
 		return nil, err
 	}
 	defer fs.Chown(dst, uid, gid)
+	defer fs.Chmod(dst, files.PermFile)
 	defer file.Close()
 
 	_, err = io.Copy(file, in)

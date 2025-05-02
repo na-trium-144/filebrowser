@@ -22,6 +22,7 @@ func MkdirAll(fs afero.Fs, path string, perm os.FileMode, uid, gid int) error {
 		return err
 	}
 	for dir := path; dir != base; dir = filepath.Dir(dir) {
+		fs.Chmod(dir, perm)
 		fs.Chown(dir, uid, gid)
 	}
 	return nil

@@ -60,6 +60,7 @@ func tusPostHandler() handleFunc {
 		if err := openFile.Close(); err != nil {
 			return errToStatus(err), err
 		}
+		d.user.Fs.Chmod(r.URL.Path, files.PermFile)
 		d.user.Fs.Chown(r.URL.Path, files.GetUID(d.user.Username), files.GID)
 
 		return http.StatusCreated, nil
@@ -137,6 +138,7 @@ func tusPatchHandler() handleFunc {
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf("could not open file: %w", err)
 		}
+		defer d.user.Fs.Chmod(r.URL.Path, files.PermFile)
 		defer d.user.Fs.Chown(r.URL.Path, files.GetUID(d.user.Username), files.GID)
 		defer openFile.Close()
 

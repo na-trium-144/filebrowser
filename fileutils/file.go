@@ -53,6 +53,7 @@ func CopyFile(fs afero.Fs, source, dest string, uid, gid int) error {
 		return err
 	}
 	defer fs.Chown(dest, uid, gid)
+	defer fs.Chmod(dest, files.PermFile)
 	defer dst.Close()
 
 	// Copy the contents of the file.
