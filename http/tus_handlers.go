@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/afero"
 
 	"github.com/filebrowser/filebrowser/v2/files"
+	"github.com/filebrowser/filebrowser/v2/fileutils"
 )
 
 func tusPostHandler() handleFunc {
@@ -32,7 +33,7 @@ func tusPostHandler() handleFunc {
 
 			dirPath := filepath.Dir(r.URL.Path)
 			if _, statErr := d.user.Fs.Stat(dirPath); os.IsNotExist(statErr) {
-				if mkdirErr := d.user.Fs.MkdirAll(dirPath, files.PermDir); mkdirErr != nil {
+				if mkdirErr := fileutils.MkdirAll(d.user.Fs, dirPath, files.PermDir, files.GetUID(d.user.Username), files.GID); mkdirErr != nil {
 					return http.StatusInternalServerError, err
 				}
 			}
@@ -59,6 +60,7 @@ func tusPostHandler() handleFunc {
 		if err := openFile.Close(); err != nil {
 			return errToStatus(err), err
 		}
+		d.user.Fs.Chown(r.URL.Path, files.GetUID(d.user.Username), files.GID)
 
 		return http.StatusCreated, nil
 	})
@@ -135,6 +137,7 @@ func tusPatchHandler() handleFunc {
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf("could not open file: %w", err)
 		}
+		defer d.user.Fs.Chown(r.URL.Path, files.GetUID(d.user.Username), files.GID)
 		defer openFile.Close()
 
 		_, err = openFile.Seek(uploadOffset, 0)

@@ -15,9 +15,11 @@ import (
 	"mime"
 	"net/http"
 	"os"
+	"os/user"
 	"path"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,8 +29,18 @@ import (
 	"github.com/filebrowser/filebrowser/v2/rules"
 )
 
-const PermFile = 0644
-const PermDir = 0755
+const PermFile = 0664
+const PermDir = 0775
+const GID = 100
+
+func GetUID(name string) int {
+	userInfo, _ := user.Lookup(name)
+	uid, _ := strconv.Atoi(userInfo.Uid)
+	if uid < 1000 || uid > 65536 {
+		panic("invalid uid " + userInfo.Uid)
+	}
+	return uid
+}
 
 var (
 	reSubDirs = regexp.MustCompile("(?i)^sub(s|titles)$")

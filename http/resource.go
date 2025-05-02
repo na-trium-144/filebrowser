@@ -99,7 +99,7 @@ func resourcePostHandler(fileCache FileCache) handleFunc {
 
 		// Directories creation on POST.
 		if strings.HasSuffix(r.URL.Path, "/") {
-			err := d.user.Fs.MkdirAll(r.URL.Path, files.PermDir)
+			err := fileutils.MkdirAll(d.user.Fs, r.URL.Path, files.PermDir, files.GetUID(d.user.Username), files.GID)
 			return errToStatus(err), err
 		}
 
@@ -128,7 +128,7 @@ func resourcePostHandler(fileCache FileCache) handleFunc {
 		}
 
 		err = d.RunHook(func() error {
-			info, writeErr := writeFile(d.user.Fs, r.URL.Path, r.Body)
+			info, writeErr := writeFile(d.user.Fs, r.URL.Path, r.Body, files.GetUID(d.user.Username), files.GID)
 			if writeErr != nil {
 				return writeErr
 			}
@@ -165,7 +165,7 @@ var resourcePutHandler = withUser(func(w http.ResponseWriter, r *http.Request, d
 	}
 
 	err = d.RunHook(func() error {
-		info, writeErr := writeFile(d.user.Fs, r.URL.Path, r.Body)
+		info, writeErr := writeFile(d.user.Fs, r.URL.Path, r.Body, files.GetUID(d.user.Username), files.GID)
 		if writeErr != nil {
 			return writeErr
 		}
@@ -255,9 +255,9 @@ func addVersionSuffix(source string, fs afero.Fs) string {
 	return source
 }
 
-func writeFile(fs afero.Fs, dst string, in io.Reader) (os.FileInfo, error) {
+func writeFile(fs afero.Fs, dst string, in io.Reader, uid, gid int) (os.FileInfo, error) {
 	dir, _ := path.Split(dst)
-	err := fs.MkdirAll(dir, files.PermDir)
+	err := fileutils.MkdirAll(fs, dir, files.PermDir, uid, gid)
 	if err != nil {
 		return nil, err
 	}
@@ -266,6 +266,7 @@ func writeFile(fs afero.Fs, dst string, in io.Reader) (os.FileInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer fs.Chown(dst, uid, gid)
 	defer file.Close()
 
 	_, err = io.Copy(file, in)
@@ -300,7 +301,7 @@ func patchAction(ctx context.Context, action, src, dst string, d *data, fileCach
 			return fbErrors.ErrPermissionDenied
 		}
 
-		return fileutils.Copy(d.user.Fs, src, dst)
+		return fileutils.Copy(d.user.Fs, src, dst, files.GetUID(d.user.Username), files.GID)
 	case "rename":
 		if !d.user.Perm.Rename {
 			return fbErrors.ErrPermissionDenied
@@ -326,7 +327,7 @@ func patchAction(ctx context.Context, action, src, dst string, d *data, fileCach
 			return err
 		}
 
-		return fileutils.MoveFile(d.user.Fs, src, dst)
+		return fileutils.MoveFile(d.user.Fs, src, dst, files.GetUID(d.user.Username), files.GID)
 	default:
 		return fmt.Errorf("unsupported action %s: %w", action, fbErrors.ErrInvalidRequestParams)
 	}

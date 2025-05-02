@@ -14,12 +14,12 @@ import (
 // MoveFile moves file from src to dst.
 // By default the rename filesystem system call is used. If src and dst point to different volumes
 // the file copy is used as a fallback
-func MoveFile(fs afero.Fs, src, dst string) error {
+func MoveFile(fs afero.Fs, src, dst string, uid, gid int) error {
 	if fs.Rename(src, dst) == nil {
 		return nil
 	}
 	// fallback
-	err := Copy(fs, src, dst)
+	err := Copy(fs, src, dst, uid, gid)
 	if err != nil {
 		_ = fs.Remove(dst)
 		return err
@@ -32,7 +32,7 @@ func MoveFile(fs afero.Fs, src, dst string) error {
 
 // CopyFile copies a file from source to dest and returns
 // an error if any.
-func CopyFile(fs afero.Fs, source, dest string) error {
+func CopyFile(fs afero.Fs, source, dest string, uid, gid int) error {
 	// Open the source file.
 	src, err := fs.Open(source)
 	if err != nil {
@@ -42,7 +42,7 @@ func CopyFile(fs afero.Fs, source, dest string) error {
 
 	// Makes the directory needed to create the dst
 	// file.
-	err = fs.MkdirAll(filepath.Dir(dest), files.PermDir)
+	err = MkdirAll(fs, filepath.Dir(dest), files.PermDir, uid, gid)
 	if err != nil {
 		return err
 	}
@@ -52,6 +52,7 @@ func CopyFile(fs afero.Fs, source, dest string) error {
 	if err != nil {
 		return err
 	}
+	defer fs.Chown(dest, uid, gid)
 	defer dst.Close()
 
 	// Copy the contents of the file.

@@ -2,14 +2,35 @@ package fileutils
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/afero"
 )
 
+func MkdirAll(fs afero.Fs, path string, perm os.FileMode, uid, gid int) error {
+	base := "/"
+	for dir := path; dir != "/"; dir = filepath.Dir(dir) {
+		exists, _ := afero.DirExists(fs, dir)
+		if exists {
+			base = dir
+			break
+		}
+	}
+	err := fs.MkdirAll(path, perm)
+	if err != nil {
+		return err
+	}
+	for dir := path; dir != base; dir = filepath.Dir(dir) {
+		fs.Chown(dir, uid, gid)
+	}
+	return nil
+}
+
 // CopyDir copies a directory from source to dest and all
 // of its sub-directories. It doesn't stop if it finds an error
 // during the copy. Returns an error if any.
-func CopyDir(fs afero.Fs, source, dest string) error {
+func CopyDir(fs afero.Fs, source, dest string, uid, gid int) error {
 	// Get properties of source.
 	srcinfo, err := fs.Stat(source)
 	if err != nil {
@@ -36,13 +57,13 @@ func CopyDir(fs afero.Fs, source, dest string) error {
 
 		if obj.IsDir() {
 			// Create sub-directories, recursively.
-			err = CopyDir(fs, fsource, fdest)
+			err = CopyDir(fs, fsource, fdest, uid, gid)
 			if err != nil {
 				errs = append(errs, err)
 			}
 		} else {
 			// Perform the file copy.
-			err = CopyFile(fs, fsource, fdest)
+			err = CopyFile(fs, fsource, fdest, uid, gid)
 			if err != nil {
 				errs = append(errs, err)
 			}
