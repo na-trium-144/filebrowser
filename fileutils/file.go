@@ -42,7 +42,7 @@ func CopyFile(fs afero.Fs, source, dest string) error {
 
 	// Makes the directory needed to create the dst
 	// file.
-	err = fs.MkdirAll(filepath.Dir(dest), files.PermDir)
+	err = MkdirAll(fs, filepath.Dir(dest), files.PermDir)
 	if err != nil {
 		return err
 	}
@@ -52,6 +52,7 @@ func CopyFile(fs afero.Fs, source, dest string) error {
 	if err != nil {
 		return err
 	}
+	defer fs.Chmod(dest, files.PermFile)
 	defer dst.Close()
 
 	// Copy the contents of the file.

@@ -27,8 +27,8 @@ import (
 	"github.com/filebrowser/filebrowser/v2/rules"
 )
 
-const PermFile = 0644
-const PermDir = 0755
+const PermFile = 0664
+const PermDir = 0775
 
 var (
 	reSubDirs = regexp.MustCompile("(?i)^sub(s|titles)$")
