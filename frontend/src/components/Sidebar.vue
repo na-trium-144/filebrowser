@@ -200,7 +200,7 @@ export default {
       return Object.assign(this.usage, usageStats);
     },
     toFs5() {
-      this.$router.push({ path: "/fs5_READONLY/" + this.user.username });
+      this.$router.push({ path: "/fs5/" + this.user.username });
       this.closeHovers();
     },
     toSamba() {
