@@ -8,12 +8,30 @@
     <template v-if="isLoggedIn">
       <button
         class="action"
-        @click="toRoot"
-        :aria-label="$t('sidebar.myFiles')"
-        :title="$t('sidebar.myFiles')"
+        @click="toFs5"
+        aria-label="fs5 (ReadOnly)"
+        title="fs5 (ReadOnly)"
       >
         <i class="material-icons">folder</i>
-        <span>{{ $t("sidebar.myFiles") }}</span>
+        <span>fs5 (ReadOnly)</span>
+      </button>
+      <button
+        class="action"
+        @click="toMnt"
+        aria-label="mnt"
+        title="mnt"
+      >
+        <i class="material-icons">folder</i>
+        <span>mnt</span>
+      </button>
+      <button
+        class="action"
+        @click="toSamba"
+        aria-label="samba"
+        title="samba"
+      >
+        <i class="material-icons">folder</i>
+        <span>samba</span>
       </button>
 
       <div v-if="user.perm.create">
@@ -159,6 +177,7 @@ export default {
     canLogout: () => !noAuth && loginPage,
   },
   methods: {
+    ...mapState(useAuthStore, ["user"]),
     ...mapActions(useLayoutStore, ["closeHovers", "showHover"]),
     async fetchUsage() {
       const path = this.$route.path.endsWith("/")
@@ -180,8 +199,16 @@ export default {
       }
       return Object.assign(this.usage, usageStats);
     },
-    toRoot() {
-      this.$router.push({ path: "/files" });
+    toFs5() {
+      this.$router.push({ path: "/fs5_READONLY/" + this.user.username });
+      this.closeHovers();
+    },
+    toSamba() {
+      this.$router.push({ path: "/samba" });
+      this.closeHovers();
+    },
+    toMnt() {
+      this.$router.push({ path: "/mnt" });
       this.closeHovers();
     },
     toAccountSettings() {
